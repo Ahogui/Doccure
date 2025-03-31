@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",(function(){document.getElementById("doctors-table")&&$("#doctors-table").DataTable({responsive:!0}),document.querySelectorAll('form[action*="destroy"]').forEach((function(e){e.addEventListener("submit",(function(e){confirm("Êtes-vous sûr de vouloir supprimer ce médecin ?")||e.preventDefault()}))}))}));

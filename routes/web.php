@@ -21,6 +21,9 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\PatientController;
+use App\Http\Controllers\Admin\DoctorController;
+use App\Http\Controllers\Admin\DepartmentController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -88,8 +91,18 @@ Route::middleware(['auth'])->group(function(){
 
     Route::get('/finances/{id}/receipt', [FinanceController::class, 'generateReceipt'])
      ->name('finances.generate.receipt');
-});
+    Route::resource('exam-types', \App\Http\Controllers\ExamTypeController::class);
 
+    Route::resource('patients', PatientController::class);
+    Route::resource('departments', DepartmentController::class);
+
+
+    // Pour la recherche
+    Route::get('patients/search', [PatientController::class, 'search'])->name('patients.search');
+    Route::post('/patients/import', [PatientController::class, 'import'])->name('patients.import');
+    Route::resource('doctors', \App\Http\Controllers\Admin\DoctorController::class);
+
+});
 Route::middleware(['guest'])->group(function () {
     Route::get('',function(){
         return redirect()->route('dashboard');

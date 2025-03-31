@@ -33,6 +33,7 @@
         <script src="assets/js/html5shiv.min.js"></script>
         <script src="assets/js/respond.min.js"></script>
     <![endif]-->
+    
 </head>
 <body>
 
@@ -75,7 +76,7 @@
 
     </div>
     <!-- /Main Wrapper -->
-    
+
 </body>
 <!-- jQuery -->
 <script src="{{asset('assets/plugins/jquery/jquery.min.js')}}"></script>
@@ -132,7 +133,7 @@
                     }
                 }
             ]).catch(swal.noop);
-        }); 
+        });
     });
     @if(Session::has('message'))
         var type = "{{ Session::get('alert-type', 'info') }}";
