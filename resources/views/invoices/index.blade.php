@@ -34,7 +34,9 @@
     </ul>
 </div>
 <div class="col-sm-5 col">
-    <a href="#add_invoice" data-toggle="modal" class="btn btn-primary float-right mt-2">Nouvelle Facture</a>
+    <a
+    href="#add_invoice"
+     data-toggle="modal" class="btn btn-primary float-right mt-2">Nouvelle Facture</a>
 </div>
 @endpush
 
@@ -48,7 +50,7 @@
                         <thead>
                             <tr>
                                 <th>N° Facture</th>
-                                <th>Client</th>
+                                <th>patient</th>
                                 <th>Date</th>
                                 <th>Montant</th>
                                 <th>Statut</th>
@@ -75,18 +77,19 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+
             <div class="modal-body">
                 <form method="POST" action="{{route('invoices.store')}}">
                     @csrf
                     <div class="row form-row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Client</label>
-                                <select class="form-control select2" name="client_id" required>
-                                    <option value="">Sélectionner un client</option>
-                                    @foreach($clients as $client)
-                                        <option value="{{$client->id}}">{{$client->name}}</option>
-                                    @endforeach
+                                <label>Patient</label>
+                                <select class="form-control select2" name="patient_id" required>
+                                    <option value="">Sélectionner un patient</option>
+                                    @foreach($patients as $patient)
+                                    <option value="{{ $patient->id }}">{{ $patient->full_name }}</option>
+                                @endforeach
                                 </select>
                             </div>
                         </div>
@@ -98,6 +101,7 @@
                         </div>
                         <div class="col-12">
                             <hr>
+
                             <h5>Produits</h5>
                             <table class="table table-bordered" id="product_table">
                                 <thead>
@@ -115,11 +119,11 @@
                                             <select class="form-control product-select" name="products[0][product_id]" required>
                                                 <option value="">Sélectionner un produit</option>
                                                 @foreach($products as $product)
-                                                    <option value="{{$product->id}}" data-price="{{$product->price}}">{{$product->name}}</option>
+                                                    <option value="{{$product->id}}" data-price="{{$product->price}}">{{$product->purchase->product}}</option>
                                                 @endforeach
                                             </select>
                                         </td>
-                                        <td><input type="number" name="products[0][quantity]" class="form-control quantity" min="1" value="1" required></td>
+                                        <td><input type="number" name="products[0][quantity]" class="form-control quantity" min="1" value="1"></td>
                                         <td><input type="text" name="products[0][unit_price]" class="form-control unit-price" readonly></td>
                                         <td><input type="text" name="products[0][total]" class="form-control total" readonly></td>
                                         <td><button type="button" class="btn btn-danger remove-row"><i class="fa fa-trash"></i></button></td>
@@ -128,12 +132,46 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="5">
-                                            <button type="button" class="btn btn-primary add-row"><i class="fa fa-plus"></i> Ajouter Produit</button>
+                                            <button type="button" class="btn btn-primary add-product-row"><i class="fa fa-plus"></i> Ajouter Produit</button>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <h5 class="mt-4">Examens</h5>
+                            <table class="table table-bordered" id="exam_table">
+                                <thead>
+                                    <tr>
+                                        <th width="70%">Examen</th>
+                                        <th width="15%">Prix</th>
+                                        <th width="15%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <select class="form-control exam-select" name="exams[0][exam_id]">
+                                                <option value="">Sélectionner un examen</option>
+                                                @foreach($exams as $exam)
+                                                    <option value="{{$exam->id}}" data-price="{{$exam->price}}">{{$exam->name}}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td><input type="text" name="exams[0][price]" class="form-control exam-price" readonly></td>
+                                        <td><button type="button" class="btn btn-danger remove-exam-row"><i class="fa fa-trash"></i></button></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3">
+                                            <button type="button" class="btn btn-primary add-exam-row"><i class="fa fa-plus"></i> Ajouter Examen</button>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                                        <td colspan="2"><input type="text" name="grand_total" class="form-control grand-total" readonly></td>
+                                        <td colspan="2" class="text-right"><strong>Total Général:</strong></td>
+                                        <td>
+                                            <input type="text" name="grand_total" class="form-control grand-total" readonly>
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -159,6 +197,7 @@
                             </div>
                         </div>
                     </div>
+                    <div id="hiddenItemsContainer"></div>
                     <button type="submit" class="btn btn-primary btn-block">Enregistrer</button>
                 </form>
             </div>
@@ -167,63 +206,6 @@
 </div>
 <!-- /ADD Modal -->
 
-<!-- View Invoice Modal -->
-<div class="modal fade" id="view_invoice" aria-hidden="true" role="dialog">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Détails de la Facture #<span id="invoice_number"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h6>Pharmacie XYZ</h6>
-                        <p>123 Rue de la Pharmacie<br>
-                        Ville, Pays<br>
-                        Tél: +123 456 7890<br>
-                        Email: contact@pharmaciexyz.com</p>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <p><strong>Client:</strong> <span id="client_name"></span></p>
-                        <p><strong>Date:</strong> <span id="invoice_date"></span></p>
-                        <p><strong>Statut:</strong> <span id="invoice_status"></span></p>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Produit</th>
-                                <th>Quantité</th>
-                                <th>Prix Unitaire</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="invoice_items">
-
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                                <td><span id="invoice_total"></span></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary print-invoice"><i class="fa fa-print"></i> Imprimer</button>
-                    <button class="btn btn-success send-invoice"><i class="fa fa-envelope"></i> Envoyer par Email</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- /View Invoice Modal -->
 @endsection
 
 @push('page-js')
@@ -235,15 +217,19 @@
             ajax: "{{route('invoices.index')}}",
             columns: [
                 {data: 'invoice_number', name: 'invoice_number'},
-                {data: 'client.name', name: 'client.name'},
+                {data: 'patient.name', name: 'patient.name'},
                 {data: 'invoice_date', name: 'invoice_date'},
                 {data: 'grand_total', name: 'grand_total', render: function(data) {
                     return data + ' FCFA';
                 }},
                 {data: 'status', name: 'status', render: function(data) {
                     var statusClass = '';
-                    if(data == 'paid') statusClass = 'paid';
-                    else if(data == 'unpaid') statusClass = 'unpaid';
+                    if(data == 'paid') {statusClass = 'paid';
+                        data = 'Payé';
+                    }
+                    else if(data == 'unpaid') {statusClass = 'unpaid';
+                        data = 'Non Payé';
+                    }
                     else statusClass = 'cancelled';
 
                     return '<span class="invoice-status '+statusClass+'">'+data.charAt(0).toUpperCase() + data.slice(1)+'</span>';
@@ -263,7 +249,7 @@
                 type: 'GET',
                 success: function(response) {
                     $('#invoice_number').text(response.invoice_number);
-                    $('#client_name').text(response.client.name);
+                    $('#patient_name').text(response.patient.name);
                     $('#invoice_date').text(response.invoice_date);
                     $('#invoice_status').text(response.status.charAt(0).toUpperCase() + response.status.slice(1));
                     $('#invoice_total').text(response.grand_total + ' FCFA');
@@ -292,7 +278,7 @@
                     '<select class="form-control product-select" name="products['+rowCount+'][product_id]" required>'+
                         '<option value="">Sélectionner un produit</option>'+
                         '@foreach($products as $product)'+
-                            '<option value="{{$product->id}}" data-price="{{$product->price}}">{{$product->name}}</option>'+
+                            '<option value="{{$product->id}}" data-price="{{$product->price}}">{{$product->purchase->product}}</option>'+
                         '@endforeach'+
                     '</select>'+
                 '</td>'+
@@ -333,18 +319,125 @@
         }
 
         // Calculate grand total
-        function calculateGrandTotal() {
-            var grandTotal = 0;
-            $('.total').each(function() {
-                grandTotal += parseFloat($(this).val()) || 0;
-            });
-            $('.grand-total').val(grandTotal.toFixed(2));
-        }
+        // function calculateGrandTotal() {
+        //     var grandTotal = 0;
+        //     $('.total').each(function() {
+        //         grandTotal += parseFloat($(this).val()) || 0;
+        //     });
+        //     $('.grand-total').val(grandTotal.toFixed(2));
+        // }
 
         // Print invoice
-        $('.print-invoice').click(function() {
-            window.print();
-        });
+        // $('.print-invoice').click(function() {
+        //     window.print();
+        // });
+        // Variables globales
+var productRowCount = 0;
+var examRowCount = 0;
+
+// Ajouter une ligne de produit
+$(document).on('click', '.add-product-row', function() {
+    productRowCount++;
+    var newRow = `
+        <tr>
+            <td>
+                <select class="form-control product-select" name="products[${productRowCount}][product_id]">
+                    <option value="">Sélectionner un produit</option>
+                    @foreach($products as $product)
+                        <option value="{{$product->id}}" data-price="{{$product->price}}">{{$product->purchase->product}}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td><input type="number" name="products[${productRowCount}][quantity]" class="form-control quantity" min="1" value="1"></td>
+            <td><input type="text" name="products[${productRowCount}][unit_price]" class="form-control unit-price" readonly></td>
+            <td><input type="text" name="products[${productRowCount}][total]" class="form-control total" readonly></td>
+            <td><button type="button" class="btn btn-danger remove-row"><i class="fa fa-trash"></i></button></td>
+        </tr>
+    `;
+    $('#product_table tbody').append(newRow);
+});
+
+// Ajouter une ligne d'examen
+$(document).on('click', '.add-exam-row', function() {
+    examRowCount++;
+    var newRow = `
+        <tr>
+            <td>
+                <select class="form-control exam-select" name="exams[${examRowCount}][exam_id]">
+                    <option value="">Sélectionner un examen</option>
+                    @foreach($exams as $exam)
+                        <option value="{{$exam->id}}" data-price="{{$exam->price}}">{{$exam->name}}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td><input type="text" name="exams[${examRowCount}][price]" class="form-control exam-price" readonly></td>
+            <td><button type="button" class="btn btn-danger remove-exam-row"><i class="fa fa-trash"></i></button></td>
+        </tr>
+    `;
+    $('#exam_table tbody').append(newRow);
+});
+
+// Gestion des sélections d'examen
+$(document).on('change', '.exam-select', function() {
+    var price = $(this).find(':selected').data('price');
+    $(this).closest('tr').find('.exam-price').val(price);
+    calculateGrandTotal();
+});
+
+// Suppression d'une ligne d'examen
+$(document).on('click', '.remove-exam-row', function() {
+    $(this).closest('tr').remove();
+    calculateGrandTotal();
+});
+
+// Calcul du total général
+function calculateGrandTotal() {
+    var grandTotal = 0;
+
+    // Calcul des produits
+    $('.total').each(function() {
+        grandTotal += parseFloat($(this).val()) || 0;
     });
+
+    // Calcul des examens
+    $('.exam-price').each(function() {
+        grandTotal += parseFloat($(this).val()) || 0;
+    });
+
+    $('.grand-total').val(grandTotal.toFixed(2));
+}
+
+// Génération du PDF
+$(document).on('click', '.print-invoice', function() {
+    var invoiceId = $(this).data('id');
+    window.open('/invoices/' + invoiceId + '/download', '_blank');
+});
+$('#invoiceForm').on('submit', function(e) {
+    e.preventDefault();
+
+    // Vérifier qu'il y a au moins un item
+    if (items.length === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Veuillez ajouter au moins un produit ou examen',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+
+    // Ajouter les items au formulaire
+    $('#hiddenItemsContainer').empty();
+    items.forEach((item, index) => {
+        $('#hiddenItemsContainer').append(`
+            <input type="hidden" name="items[${index}][type]" value="${item.type}">
+            <input type="hidden" name="items[${index}][id]" value="${item.id}">
+            <input type="hidden" name="items[${index}][quantity]" value="${item.quantity}">
+        `);
+    });
+
+    // Soumettre le formulaire
+    this.submit();
+});    });
 </script>
 @endpush

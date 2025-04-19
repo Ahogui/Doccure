@@ -180,21 +180,21 @@ class ProductController extends Controller
             return DataTables::of($products)
                 ->addColumn('product',function($product){
                     $image = '';
-                    if(!empty($product->purchase)){
+                    if(!empty($product)){
                         $image = null;
-                        if(!empty($product->purchase->image)){
+                        if(!empty($product->image)){
                             $image = '<span class="avatar avatar-sm mr-2">
-                            <img class="avatar-img" src="'.asset("storage/purchases/".$product->purchase->image).'" alt="image">
+                            <img class="avatar-img" src="'.asset("storage/purchases/".$product->image).'" alt="image">
                             </span>';
                         }
-                        return $product->purchase->product. ' ' . $image;
+                        return $product->product. ' ' . $image;
                     }
                 })
 
                 ->addColumn('category',function($product){
                     $category = null;
-                    if(!empty($product->purchase->category)){
-                        $category = $product->purchase->category->name;
+                    if(!empty($product->category)){
+                        $category = $product->category->name;
                     }
                     return $category;
                 })
@@ -202,13 +202,13 @@ class ProductController extends Controller
                     return settings('app_currency','$').' '. $product->price;
                 })
                 ->addColumn('quantity',function($product){
-                    if(!empty($product->purchase)){
-                        return $product->purchase->quantity;
+                    if(!empty($product)){
+                        return $product->quantity;
                     }
                 })
                 ->addColumn('expiry_date',function($product){
-                    if(!empty($product->purchase)){
-                        return date_format(date_create($product->purchase->expiry_date),'d M, Y');
+                    if(!empty($product)){
+                        return date_format(date_create($product->expiry_date),'d M, Y');
                     }
                 })
                 ->addColumn('action', function ($row) {
@@ -257,7 +257,7 @@ class ProductController extends Controller
                         return $product->purchase->product. ' ' . $image;
                     }
                 })
-               
+
                 ->addColumn('category',function($product){
                     $category = null;
                     if(!empty($product->purchase->category)){

@@ -11,11 +11,30 @@ use Illuminate\Support\Facades\Validator;
 
 class PatientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $patients = Patient::latest()->paginate(20);
+        $search = $request->input('search');
+
+        $patients = Patient::query()
+            ->when($search, function($query, $search) {
+                return $query->where('code_patient', 'like', "%{$search}%")
+                            ->orWhere('nom', 'like', "%{$search}%")
+                            ->orWhere('prenom', 'like', "%{$search}%")
+                            ->orWhere('telephone', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orderBy('nom') // Tri par nom de famille
+            ->orderBy('prenom') // Second tri par prénom
+            ->orderBy('created_at', 'desc') // Tri par date de création décroissante
+            ->paginate(10);
+
         return view('patients.index', compact('patients'));
     }
+    // public function index()
+    // {
+    //     $patients = Patient::latest()->paginate(20);
+    //     return view('patients.index', compact('patients'));
+    // }
 
     public function create()
     {

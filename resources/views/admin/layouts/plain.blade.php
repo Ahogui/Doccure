@@ -30,7 +30,7 @@
             <div class="container">
                 <div class="loginbox">
                     <div class="login-left">
-                        <img class="img-fluid" src="{{!empty(AppSettings::get('logo')) ? asset('storage/'.AppSettings::get('logo')): asset('assets/img/logo.png')}}" alt="Logo">
+                        <img class="img-fluid" src="{{!empty(AppSettings::get('logo')) ? asset('assets/'.AppSettings::get('logo')): asset('assets/img/logo.png')}}" alt="Logo">
                     </div>
                     <div class="login-right">
                         <div class="login-right-wrap">
@@ -47,7 +47,7 @@
         </div>
     </div>
     <!-- /Main Wrapper -->
-    
+
 </body>
 <!-- jQuery -->
 <script src="{{asset('assets/js/jquery-3.2.1.min.js')}}"></script>

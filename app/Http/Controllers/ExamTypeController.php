@@ -7,9 +7,20 @@ use Illuminate\Http\Request;
 
 class ExamTypeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $examTypes = ExamType::latest()->paginate(10);
+        $search = $request->input('search');
+
+        $examTypes = ExamType::query()
+            ->when($search, function($query, $search) {
+                return $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('category', 'like', "%{$search}%")
+                            ->orWhere('price', 'like', "%{$search}%")
+                            ->orWhere('duration', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->paginate(10);
+
         return view('exam-types.index', compact('examTypes'));
     }
 

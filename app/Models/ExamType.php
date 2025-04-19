@@ -55,4 +55,20 @@ class ExamType extends Model
     {
         return number_format($this->price, 2) . ' FCFA';
     }
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function($q) use ($term) {
+            $q->where('name', 'like', "%$term%")
+            ->orWhere('category', 'like', "%$term%")
+            ->orWhere('price', 'like', "%$term%")
+            ->orWhere('duration', 'like', "%$term%")
+            ->orWhereRaw("CONCAT(price, ' ', 'FCFA') LIKE ?", ["%$term%"]);
+        });
+    }
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'exam_type_invoice')
+                    ->withPivot('price')
+                    ->withTimestamps();
+    }
 }

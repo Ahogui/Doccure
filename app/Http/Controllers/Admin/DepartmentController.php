@@ -5,14 +5,29 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
+use Kyslik\ColumnSortable\Sortable;
 
 class DepartmentController extends Controller
 {
-    public function index()
-    {
-        $departments = Department::with('headDoctor')->paginate(10);
-        return view('departments.index', compact('departments'));
-    }
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+
+    $departments = Department::query()
+        ->when($search, function($query, $search) {
+            return $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%")
+                        ->orWhereHas('headDoctor', function($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                              ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+        })
+        ->with('headDoctor')
+        ->sortable()
+        ->paginate(10);
+
+    return view('departments.index', compact('departments'));
+}
 
     public function create()
     {
@@ -62,4 +77,5 @@ class DepartmentController extends Controller
         return redirect()->route('departments.index')
             ->with('success', 'Département supprimé avec succès');
     }
+
 }

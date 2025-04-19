@@ -136,11 +136,6 @@
                                              <i class="fas fa-receipt"></i>
                                          </a>
 
-                                         <!-- Autres boutons existants -->
-                                         <a href="{{ route('finances.show', $transaction->id) }}" class="btn btn-sm bg-info-light" title="Voir">
-                                             <i class="fe fe-eye"></i>
-                                         </a>
-                                         <!-- ... -->
                                     </div>
                                 </td>
                             </tr>

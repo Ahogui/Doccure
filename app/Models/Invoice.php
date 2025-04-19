@@ -2,73 +2,76 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'invoice_number',
-        'client_id',
+        'patient_id',
         'invoice_date',
-        'grand_total',
+        'total_amount',
         'status',
-        'payment_method',
-        'notes'
+        'payment_method'
     ];
 
-    protected $dates = ['invoice_date'];
+    protected $casts = [
+        'invoice_date' => 'datetime',
+        'total_amount' => 'decimal:2'
+    ];
 
-    /**
-     * Relation avec le client
-     */
-    public function client()
+    public function patient()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Patient::class)->withDefault([
+            'name' => 'Patient supprimé'
+        ]);
     }
 
-    /**
-     * Relation avec les produits de la facture
-     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class)->withDefault([
+            'name' => 'Département inconnu'
+        ]);
+    }
+
     public function items()
     {
         return $this->hasMany(InvoiceItem::class);
     }
 
-    /**
-     * Génère un numéro de facture unique
-     */
-    public static function generateInvoiceNumber()
+    public function getFormattedTotalAttribute()
     {
-        $latest = self::latest()->first();
-        $number = $latest ? (int) explode('-', $latest->invoice_number)[1] + 1 : 1;
-        return 'FACT-' . str_pad($number, 6, '0', STR_PAD_LEFT);
+        return number_format($this->total_amount, 2) . ' FCFA';
     }
 
-    /**
-     * Statut de la facture avec couleur
-     */
-    public function getStatusAttribute($value)
+    public function scopePending($query)
     {
-        return [
-            'paid' => 'Payé',
-            'unpaid' => 'Non Payé',
-            'cancelled' => 'Annulé'
-        ][$value] ?? $value;
+        return $query->where('status', 'pending');
     }
 
-    /**
-     * Mode de paiement formaté
-     */
-    public function getPaymentMethodAttribute($value)
+    public function scopePaid($query)
     {
-        return [
-            'cash' => 'Espèces',
-            'card' => 'Carte Bancaire',
-            'transfer' => 'Virement',
-            'check' => 'Chèque'
-        ][$value] ?? $value;
+        return $query->where('status', 'paid');
+    }
+
+    public function markAsPaid()
+    {
+        $this->update(['status' => 'paid']);
+        return $this;
+    }
+    public function products()
+    {
+        return $this->belongsToMany(Product::class)
+                    ->withPivot('quantity', 'unit_price', 'total')
+                    ->withTimestamps();
+    }
+    public function examTypes()
+    {
+        return $this->belongsToMany(ExamType::class, 'exam_type_invoice')
+                    ->withPivot('price')
+                    ->withTimestamps();
     }
 }

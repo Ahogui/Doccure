@@ -76,7 +76,7 @@ Route::middleware(['auth'])->group(function(){
     Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
     Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     Route::get('invoices/data', [InvoiceController::class, 'getInvoices'])->name('invoices.data');
-
+   Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'downloadReceipt'])->name('invoices.download');
     // routes/web.php
     Route::prefix('finances')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('finances.index');
@@ -101,8 +101,14 @@ Route::middleware(['auth'])->group(function(){
     Route::get('patients/search', [PatientController::class, 'search'])->name('patients.search');
     Route::post('/patients/import', [PatientController::class, 'import'])->name('patients.import');
     Route::resource('doctors', \App\Http\Controllers\Admin\DoctorController::class);
+    Route::get('/patients/{patient}/invoices/create', [InvoiceController::class, 'create'])
+        ->name('invoices.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])
+        ->name('invoices.store');
 
 });
+Route::get('invoices/datatable', [InvoiceController::class, 'getInvoices'])->name('invoices.datatable');
+
 Route::middleware(['guest'])->group(function () {
     Route::get('',function(){
         return redirect()->route('dashboard');

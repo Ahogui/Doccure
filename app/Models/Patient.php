@@ -24,7 +24,17 @@ class Patient extends Model
     ];
 
     protected $dates = ['date_naissance'];
+    
+    protected $casts = [
+        'date_naissance' => 'date',
+        'created_at' => 'datetime', // Déjà fait par défaut dans Laravel
+        'updated_at' => 'datetime', // Déjà fait par défaut dans Laravel
+    ];
 
+    public function getAgeAttribute()
+    {
+        return $this->date_naissance->age;
+    }
     // Relation avec les consultations
     public function consultations()
     {
@@ -47,18 +57,20 @@ class Patient extends Model
         });
     }
 
-    // Accessor pour le nom complet
-    public function getNomCompletAttribute()
+    public function getFullNameAttribute()
     {
-        return $this->prenom . ' ' . $this->nom;
+        return $this->nom . ' ' . $this->prenom;
     }
 
-    // Scope pour la recherche
     public function scopeSearch($query, $term)
     {
-        return $query->where('nom', 'like', "%$term%")
-                    ->orWhere('prenom', 'like', "%$term%")
-                    ->orWhere('code_patient', 'like', "%$term%")
-                    ->orWhere('telephone', 'like', "%$term%");
+        return $query->where(function($q) use ($term) {
+            $q->where('nom', 'like', "%$term%")
+            ->orWhere('prenom', 'like', "%$term%")
+            ->orWhere('code_patient', 'like', "%$term%")
+            ->orWhere('telephone', 'like', "%$term%")
+            ->orWhere('email', 'like', "%$term%")
+            ->orWhereRaw("CONCAT(nom, ' ', prenom) LIKE ?", ["%$term%"]);
+        });
     }
 }

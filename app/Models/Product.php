@@ -17,4 +17,10 @@ class Product extends Model
     public function purchase(){
         return $this->belongsTo(Purchase::class);
     }
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class)
+                    ->withPivot('quantity', 'unit_price', 'total')
+                    ->withTimestamps();
+    }
 }

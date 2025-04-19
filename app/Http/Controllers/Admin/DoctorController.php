@@ -10,9 +10,22 @@ use Illuminate\Http\Request;
 
 class DoctorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $doctors = Doctor::latest()->paginate(10);
+        $search = $request->input('search');
+
+        $doctors = Doctor::query()
+            ->when($search, function($query, $search) {
+                return $query->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('specialization', 'like', "%{$search}%")
+                            ->orWhere('license_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orderBy('last_name')
+            ->paginate(10);
+
         return view('admin.doctors.index', compact('doctors'));
     }
 

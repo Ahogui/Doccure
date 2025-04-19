@@ -19,7 +19,7 @@
 
 <div class="row">
     <!-- Ventes du jour -->
-    <div class="col-xl-3 col-sm-6 col-12">
+    {{-- <div class="col-xl-3 col-sm-6 col-12">
         <div class="card">
             <div class="card-body">
                 <div class="dash-widget-header">
@@ -38,10 +38,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Catégories de produits -->
-    <div class="col-xl-3 col-sm-6 col-12">
+    {{-- <div class="col-xl-3 col-sm-6 col-12">
         <div class="card">
             <div class="card-body">
                 <div class="dash-widget-header">
@@ -60,7 +60,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Produits expirés -->
     <div class="col-xl-3 col-sm-6 col-12">
@@ -199,7 +199,7 @@
 </div>
 
 <!-- Troisième ligne - Statistiques financières -->
-<div class="row mt-4">
+{{-- <div class="row mt-4">
     <!-- Entrées -->
     <div class="col-xl-3 col-sm-6 col-12">
         <div class="card">
@@ -265,7 +265,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- Graphiques -->
 <div class="row mt-4">

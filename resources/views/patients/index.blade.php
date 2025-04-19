@@ -5,12 +5,32 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title">Gestion des Patients</h4>
-                <div class="float-right">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Gestion des Patients</h4>
+                    <div>
+                        <!-- Formulaire de recherche -->
+                        <form action="{{ route('patients.index') }}" method="GET" class="form-inline mr-2">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Rechercher..."
+                                       value="{{ request('search') }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    @if(request('search'))
+                                    <a href="{{ route('patients.index') }}" class="btn btn-outline-danger">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="float-right mt-2">
                     <a href="{{ route('patients.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Nouveau Patient
                     </a>
-                    <!-- Bouton d'importation -->
                     <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importModal">
                         <i class="fas fa-file-import"></i> Importer
                     </button>
@@ -22,6 +42,7 @@
                         <thead>
                             <tr>
                                 <th>Code</th>
+                                <th>Date création</th>
                                 <th>Nom Complet</th>
                                 <th>Téléphone</th>
                                 <th>Sexe</th>
@@ -30,13 +51,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($patients as $patient)
+                            @forelse($patients as $patient)
                             <tr>
                                 <td>{{ $patient->code_patient }}</td>
-                                <td>{{ $patient->nom_complet }}</td>
+                                <td>{{ $patient->created_at->format('d/m/Y H:i') }}</td>
+                                <td>{{ $patient->nom }} {{ $patient->prenom }}</td>
                                 <td>{{ $patient->telephone }}</td>
                                 <td>{{ $patient->sexe == 'M' ? 'Masculin' : 'Féminin' }}</td>
-                                <td>{{ $patient->date_naissance->age }} ans</td>
+                                <td>{{ $patient->age }} ans</td>
+                                {{-- td>{{ $patient->date_naissance->age }} ans</td> --}}
                                 <td>
                                     <a href="{{ route('patients.show', $patient) }}" class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i>
@@ -53,16 +76,21 @@
                                     </form>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center">Aucun patient trouvé</td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-                {{ $patients->links() }}
+                {{ $patients->appends(request()->query())->links() }}
             </div>
         </div>
     </div>
 </div>
 @endsection
+
 <!-- Modal d'importation -->
 <div class="modal fade" id="importModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -74,12 +102,14 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="importForm" method="POST" enctype="multipart/form-data">
+                <form id="importForm" action="{{ route('patients.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-
                     <div class="form-group">
                         <label for="import_file">Fichier Excel/CSV</label>
-                        <input type="file" class="form-control-file" id="import_file" name="file" required>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="file" name="file" required>
+                            <label class="custom-file-label" for="file">Choisir un fichier</label>
+                        </div>
                         <small class="form-text text-muted">
                             Taille max: 5MB. Format attendu:
                             <a href="{{ asset('storage/templates/patients_template.xlsx') }}" download>
@@ -105,6 +135,7 @@
         </div>
     </div>
 </div>
+
 @push('page-js')
 <script>
     // Afficher le nom du fichier sélectionné
@@ -113,95 +144,79 @@
         var nextSibling = e.target.nextElementSibling;
         nextSibling.innerText = fileName;
     });
+
+    // Gestion de la recherche
+    document.addEventListener('DOMContentLoaded', function() {
+        // Réinitialiser la recherche
+        document.querySelector('.btn-outline-danger')?.addEventListener('click', function() {
+            window.location.href = "{{ route('patients.index') }}";
+        });
+    });
 </script>
-@endpush
-@push('page-js')
+
 <script>
     document.getElementById('importForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+        e.preventDefault();
 
-    const button = document.getElementById('importButton');
-    const spinner = document.getElementById('importSpinner');
-    const feedback = document.getElementById('importFeedback');
-    const form = this;
+        const button = document.getElementById('importButton');
+        const spinner = document.getElementById('importSpinner');
+        const feedback = document.getElementById('importFeedback');
+        const form = this;
 
-    // Réinitialisation UI
-    button.disabled = true;
-    spinner.classList.remove('d-none');
-    feedback.classList.remove('alert-danger', 'alert-success');
-    feedback.classList.add('d-none');
-    feedback.innerHTML = '';
+        // Réinitialisation UI
+        button.disabled = true;
+        spinner.classList.remove('d-none');
+        feedback.classList.remove('alert-danger', 'alert-success');
+        feedback.classList.add('d-none');
+        feedback.innerHTML = '';
 
-    try {
-        const formData = new FormData(form);
-
-        // Debug: Vérifiez le contenu du FormData
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
-        }
-
-        const response = await fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            }
-        });
-
-        // Debug: Vérifiez la réponse brute
-        console.log('Response status:', response.status);
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-
-        let data;
         try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error('Réponse serveur invalide');
-        }
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                }
+            });
 
-        if (!response.ok) {
-            // Gestion améliorée des erreurs de validation
-            if (data.errors) {
-                const errorList = Object.entries(data.errors)
-                    .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-                    .join('<br>');
-                throw new Error(`Erreurs de validation:<br>${errorList}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.errors) {
+                    const errorList = Object.entries(data.errors)
+                        .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+                        .join('<br>');
+                    throw new Error(`Erreurs de validation:<br>${errorList}`);
+                }
+                throw new Error(data.message || 'Erreur serveur');
             }
-            throw new Error(data.message || 'Erreur serveur');
-        }
 
-        // Succès
-        feedback.classList.add('alert-success');
-        feedback.innerHTML = `
-            <i class="fas fa-check-circle"></i> ${data.message || 'Import réussi'}
-            ${data.stats ? `<br><small>${data.stats.created} créés · ${data.stats.skipped} ignorés</small>` : ''}
-        `;
+            // Succès
+            feedback.classList.add('alert-success');
+            feedback.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${data.message || 'Import réussi'}
+                ${data.stats ? `<br><small>${data.stats.created} créés · ${data.stats.updated} mis à jour · ${data.stats.skipped} ignorés</small>` : ''}
+            `;
 
-        // Rechargement doux après 3s
-        setTimeout(() => {
-            window.location.href = window.location.href;
-        }, 3000);
+            // Rechargement après 3s
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
 
-    } catch (error) {
-        console.error('Import error:', error);
-        feedback.classList.add('alert-danger');
-
-        // Affichage propre des erreurs
-        if (error.message.includes('validation')) {
-            feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${error.message}`;
-        } else {
+        } catch (error) {
+            console.error('Import error:', error);
+            feedback.classList.add('alert-danger');
             feedback.innerHTML = `
                 <i class="fas fa-exclamation-circle"></i>
                 ${error.message || 'Une erreur inattendue est survenue'}
             `;
+        } finally {
+            button.disabled = false;
+            spinner.classList.add('d-none');
+            feedback.classList.remove('d-none');
         }
-    } finally {
-        button.disabled = false;
-        spinner.classList.add('d-none');
-        feedback.classList.remove('d-none');
-    }
-});
+    });
 </script>
 @endpush
