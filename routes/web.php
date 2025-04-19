@@ -34,6 +34,9 @@ use App\Http\Controllers\Admin\DepartmentController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::fallback(function () {
+    return redirect()->route('dashboard'); // Redirige vers le dashboard
+});
 Route::middleware(['auth'])->group(function(){
     Route::get('dashboard',[DashboardController::class,'index'])->name('dashboard');
     Route::get('',[DashboardController::class,'Index']);
